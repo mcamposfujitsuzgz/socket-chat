@@ -19,7 +19,8 @@ io.on('connection', (client) => {
         let personas = usuarios.agregarPersona(client.id, usuario.nombre, usuario.sala);
 
         // a los usuarios de la sala
-        client.broadcast.to(data.sala).emit('listaPersona', usuarios.getPersonasPorSala(usuario.sala));
+        client.broadcast.to(usuario.sala).emit('listaPersona', usuarios.getPersonasPorSala(usuario.sala));
+        client.broadcast.to(usuario.sala).emit('crearMensaje', crearMensaje('Administrador', `${usuario.nombre} se unio el chat`));
 
         // a todos los usuarios
         //client.broadcast.emit('listaPersona', usuarios.getPersonas());
@@ -34,20 +35,19 @@ io.on('connection', (client) => {
         client.broadcast.to(personaBorrada.sala).emit('listaPersona', usuarios.getPersonasPorSala(personaBorrada.sala));
     });
 
-    client.on('crearMensaje', (data) => {
+    client.on('crearMensaje', (data, callback) => {
         let persona = usuarios.getPersona(client.id);
 
-        client.broadcast.to(persona.sala).emit('crearMensaje', crearMensaje(persona.nombre, data.mensaje));
+        let mensaje = crearMensaje(persona.nombre, data.mensaje);
+        client.broadcast.to(persona.sala).emit('crearMensaje', mensaje);
+
+        callback(mensaje);
     });
-
-
 
     client.on('mensajePrivado', (data) => {
         let persona = usuarios.getPersona(client.id);
         client.broadcast.to(data.para).emit('mensajePrivado', crearMensaje(persona.nombre, data.mensaje));
     });
-
-
 });
 
 const crearMensaje = (nombre, mensaje) => {
